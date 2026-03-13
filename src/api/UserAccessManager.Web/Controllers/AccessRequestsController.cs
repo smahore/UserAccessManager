@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UserAccessManager.Web.Models;
 using UserAccessManager.Web.Services;
 
 namespace UserAccessManager.Web.Controllers;
 
+[Authorize]
 public class AccessRequestsController : Controller
 {
     private readonly ApiClientService _api;
