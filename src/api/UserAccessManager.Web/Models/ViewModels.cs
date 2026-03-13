@@ -12,6 +12,5 @@ public class DashboardViewModel
     public int TotalUsers { get; set; }
     public int TotalApplications { get; set; }
     public int PendingRequests { get; set; }
-    public int StagingUsers { get; set; }
     public List<AccessRequestDto> RecentRequests { get; set; } = [];
 }

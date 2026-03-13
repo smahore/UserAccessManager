@@ -47,12 +47,12 @@
     <div class="col-md-3">
         <div class="card stat-card h-100">
             <div class="card-body text-center py-4">
-                <div class="stat-icon stat-icon-info mx-auto mb-2"><i class="bi bi-person-plus"></i></div>
-                <div class="stat-value">@Model.StagingUsers</div>
-                <small class="text-muted">Staging Users</small>
+                <div class="stat-icon stat-icon-info mx-auto mb-2"><i class="bi bi-download"></i></div>
+                <div class="stat-value small fw-bold">Export Users</div>
+                <small class="text-muted">Download as Excel</small>
             </div>
-            <a asp-controller="StagingUsers" asp-action="Index" class="card-footer text-center text-decoration-none small">
-                View Staging <i class="bi bi-arrow-right"></i>
+            <a asp-controller="Users" asp-action="Export" class="card-footer text-center text-decoration-none small">
+                Export Excel <i class="bi bi-arrow-right"></i>
             </a>
         </div>
     </div>

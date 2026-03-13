@@ -22,6 +22,24 @@ public class ApiClientService
         return await GetDataAsync<PagedResult<UserDto>>(url);
     }
 
+    /// <summary>
+    /// Fetches all users by paging through the API. Used for Excel export.
+    /// </summary>
+    public async Task<List<UserDto>> GetAllUsersAsync()
+    {
+        var all = new List<UserDto>();
+        int page = 1;
+        const int pageSize = 200;
+        PagedResult<UserDto> result;
+        do
+        {
+            result = await GetUsersAsync(page, pageSize);
+            all.AddRange(result.Items);
+            page++;
+        } while (result.HasNext);
+        return all;
+    }
+
     public async Task<UserDto?> GetUserByIdAsync(int id)
         => await GetDataOrDefaultAsync<UserDto>($"api/users/{id}");
 
@@ -71,6 +89,24 @@ public class ApiClientService
 
     public async Task<PagedResult<StagingUserDto>> GetStagingUsersAsync(int page = 1, int pageSize = 20)
         => await GetDataAsync<PagedResult<StagingUserDto>>($"api/staging-users?page={page}&pageSize={pageSize}");
+
+    /// <summary>
+    /// Fetches all staging users for the Add User dropdown.
+    /// </summary>
+    public async Task<List<StagingUserDto>> GetAllStagingUsersAsync()
+    {
+        var all = new List<StagingUserDto>();
+        int page = 1;
+        const int pageSize = 200;
+        PagedResult<StagingUserDto> result;
+        do
+        {
+            result = await GetStagingUsersAsync(page, pageSize);
+            all.AddRange(result.Items);
+            page++;
+        } while (result.HasNext);
+        return all;
+    }
 
     public async Task<ApiResponse<UserDto>> PromoteStagingUserAsync(int id, string? createdBy = null)
         => await PostAsync<UserDto>($"api/staging-users/promote/{id}", new PromoteUserRequest { CreatedBy = createdBy });

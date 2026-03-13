@@ -18,7 +18,6 @@ public class HomeController : Controller
         var users = await _api.GetUsersAsync(1, 1);
         var apps = await _api.GetApplicationsAsync();
         var pendingRequests = await _api.GetAccessRequestsAsync(1, 1, "Pending");
-        var stagingUsers = await _api.GetStagingUsersAsync(1, 1);
         var recentRequests = await _api.GetAccessRequestsAsync(1, 5);
 
         var model = new DashboardViewModel
@@ -26,7 +25,6 @@ public class HomeController : Controller
             TotalUsers = users.TotalCount,
             TotalApplications = apps.Count,
             PendingRequests = pendingRequests.TotalCount,
-            StagingUsers = stagingUsers.TotalCount,
             RecentRequests = recentRequests.Items
         };
 

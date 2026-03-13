@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UserAccessManager.Web.Models;
@@ -32,14 +33,22 @@ public class UsersController : Controller
         return View(user);
     }
 
-    public IActionResult Create() => View();
+    public async Task<IActionResult> Create()
+    {
+        var stagingUsers = await _api.GetAllStagingUsersAsync();
+        ViewBag.StagingUsers = stagingUsers;
+        return View();
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateUserRequest request)
     {
         if (!ModelState.IsValid)
+        {
+            ViewBag.StagingUsers = await _api.GetAllStagingUsersAsync();
             return View(request);
+        }
 
         var response = await _api.CreateUserAsync(request);
         if (response.Success)
@@ -52,6 +61,7 @@ public class UsersController : Controller
             ModelState.AddModelError(string.Empty, error);
         if (!string.IsNullOrEmpty(response.Message))
             ModelState.AddModelError(string.Empty, response.Message);
+        ViewBag.StagingUsers = await _api.GetAllStagingUsersAsync();
         return View(request);
     }
 
@@ -120,5 +130,47 @@ public class UsersController : Controller
         var response = await _api.RemoveRoleAsync(id, appId);
         TempData[response.Success ? "Success" : "Error"] = response.Message;
         return RedirectToAction(nameof(Details), new { id });
+    }
+
+    // ── Export ──────────────────────────────────────────────────────────
+
+    public async Task<IActionResult> Export()
+    {
+        var users = await _api.GetAllUsersAsync();
+
+        using var workbook = new XLWorkbook();
+        var ws = workbook.Worksheets.Add("Users");
+
+        ws.Cell(1, 1).Value = "UserName";
+        ws.Cell(1, 2).Value = "FullName";
+        ws.Cell(1, 3).Value = "Email";
+        ws.Cell(1, 4).Value = "Source";
+        ws.Cell(1, 5).Value = "IsActive";
+        ws.Cell(1, 6).Value = "CreatedAt";
+
+        var headerRange = ws.Range(1, 1, 1, 6);
+        headerRange.Style.Font.Bold = true;
+        headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#e2e8f0");
+
+        for (int i = 0; i < users.Count; i++)
+        {
+            var u = users[i];
+            int row = i + 2;
+            ws.Cell(row, 1).Value = u.UserName;
+            ws.Cell(row, 2).Value = u.FullName ?? "";
+            ws.Cell(row, 3).Value = u.Email ?? "";
+            ws.Cell(row, 4).Value = u.Source;
+            ws.Cell(row, 5).Value = u.IsActive ? "Active" : "Inactive";
+            ws.Cell(row, 6).Value = u.CreatedAt.ToString("yyyy-MM-dd");
+        }
+
+        ws.Columns().AdjustToContents();
+
+        var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        stream.Position = 0;
+
+        var fileName = $"Users_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 }
