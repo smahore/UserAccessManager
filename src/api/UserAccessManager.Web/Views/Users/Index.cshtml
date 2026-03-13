@@ -19,11 +19,11 @@
 
 <div class="card mb-3">
     <div class="card-body py-2">
-        <form method="get" class="d-flex gap-2 align-items-center">
+        <form id="searchForm" method="get" class="d-flex gap-2 align-items-center">
             <div class="flex-grow-1 position-relative">
                 <i class="bi bi-search position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
-                <input type="text" name="search" value="@search" class="form-control form-control-sm ps-5"
-                       placeholder="Search by username, name, or email..." />
+                <input type="text" name="search" id="searchInput" value="@search" class="form-control form-control-sm ps-5"
+                       placeholder="Search by username, name, or email..." autocomplete="off" />
             </div>
             <button type="submit" class="btn btn-sm btn-primary">
                 <i class="bi bi-search me-1"></i>Search
@@ -131,3 +131,28 @@
 <p class="text-muted text-center small mt-2">
     Showing page @Model.Page of @Model.TotalPages (@Model.TotalCount total users)
 </p>
+
+@section Scripts {
+    <script>
+        (function () {
+            const input = document.getElementById('searchInput');
+            const form = document.getElementById('searchForm');
+            let timer;
+            input.addEventListener('input', function () {
+                clearTimeout(timer);
+                const val = this.value.trim();
+                if (val.length >= 4) {
+                    timer = setTimeout(function () {
+                        form.submit();
+                    }, 700);
+                }
+            });
+
+            // Restore focus and cursor position after postback
+            if (input.value.length > 0) {
+                input.focus();
+                input.setSelectionRange(input.value.length, input.value.length);
+            }
+        })();
+    </script>
+}
