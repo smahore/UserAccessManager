@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="UserAccessManager.API.Tests/UserAccessManager.API.Tests.csproj" />
   <Project Path="UserAccessManager.API/UserAccessManager.API.csproj" />
   <Project Path="UserAccessManager.Core/UserAccessManager.Core.csproj" />
   <Project Path="UserAccessManager.Infrastructure/UserAccessManager.Infrastructure.csproj" />

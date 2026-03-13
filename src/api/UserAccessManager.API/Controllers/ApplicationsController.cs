@@ -1,8 +1,8 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using UserAccessManager.Core.DTOs.Request;
 using UserAccessManager.Core.DTOs.Response;
 using UserAccessManager.Core.Interfaces;
-using UserAccessManager.Core.Validators;
 
 namespace UserAccessManager.API.Controllers;
 
@@ -11,8 +11,15 @@ namespace UserAccessManager.API.Controllers;
 public class ApplicationsController : ControllerBase
 {
     private readonly IApplicationRepository _repo;
+    private readonly IValidator<CreateApplicationRequest> _createValidator;
 
-    public ApplicationsController(IApplicationRepository repo) => _repo = repo;
+    public ApplicationsController(
+        IApplicationRepository repo,
+        IValidator<CreateApplicationRequest> createValidator)
+    {
+        _repo = repo;
+        _createValidator = createValidator;
+    }
 
     [HttpGet]
     public async Task<ActionResult<ApiResponse<IEnumerable<ApplicationDto>>>> GetAll()
@@ -33,8 +40,7 @@ public class ApplicationsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ApiResponse<ApplicationDto>>> Create([FromBody] CreateApplicationRequest request)
     {
-        var validator = new CreateApplicationRequestValidator();
-        var validation = await validator.ValidateAsync(request);
+        var validation = await _createValidator.ValidateAsync(request);
         if (!validation.IsValid)
             return BadRequest(ApiResponse<ApplicationDto>.FailResponse("Validation failed.", validation.Errors.Select(e => e.ErrorMessage).ToList()));
 

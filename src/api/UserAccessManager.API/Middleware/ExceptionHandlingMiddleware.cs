@@ -6,6 +6,7 @@ namespace UserAccessManager.API.Middleware;
 
 public class ExceptionHandlingMiddleware
 {
+    private static readonly JsonSerializerOptions s_jsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
 
@@ -37,7 +38,6 @@ public class ExceptionHandlingMiddleware
             "An unexpected error occurred. Please try again later.",
             [exception.Message]);
 
-        var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-        return context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
+        return context.Response.WriteAsync(JsonSerializer.Serialize(response, s_jsonOptions));
     }
 }

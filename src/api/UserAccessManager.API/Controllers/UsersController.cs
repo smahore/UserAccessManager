@@ -1,8 +1,8 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using UserAccessManager.Core.DTOs.Request;
 using UserAccessManager.Core.DTOs.Response;
 using UserAccessManager.Core.Interfaces;
-using UserAccessManager.Core.Validators;
 
 namespace UserAccessManager.API.Controllers;
 
@@ -11,8 +11,18 @@ namespace UserAccessManager.API.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserRepository _repo;
+    private readonly IValidator<CreateUserRequest> _createValidator;
+    private readonly IValidator<UpdateUserRequest> _updateValidator;
 
-    public UsersController(IUserRepository repo) => _repo = repo;
+    public UsersController(
+        IUserRepository repo,
+        IValidator<CreateUserRequest> createValidator,
+        IValidator<UpdateUserRequest> updateValidator)
+    {
+        _repo = repo;
+        _createValidator = createValidator;
+        _updateValidator = updateValidator;
+    }
 
     [HttpGet]
     public async Task<ActionResult<ApiResponse<PagedResult<UserDto>>>> GetAll(
@@ -45,8 +55,7 @@ public class UsersController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ApiResponse<UserDto>>> Create([FromBody] CreateUserRequest request)
     {
-        var validator = new CreateUserRequestValidator();
-        var validation = await validator.ValidateAsync(request);
+        var validation = await _createValidator.ValidateAsync(request);
         if (!validation.IsValid)
             return BadRequest(ApiResponse<UserDto>.FailResponse("Validation failed.", validation.Errors.Select(e => e.ErrorMessage).ToList()));
 
@@ -58,8 +67,7 @@ public class UsersController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<ApiResponse<object>>> Update(int id, [FromBody] UpdateUserRequest request)
     {
-        var validator = new UpdateUserRequestValidator();
-        var validation = await validator.ValidateAsync(request);
+        var validation = await _updateValidator.ValidateAsync(request);
         if (!validation.IsValid)
             return BadRequest(ApiResponse<object>.FailResponse("Validation failed.", validation.Errors.Select(e => e.ErrorMessage).ToList()));
 

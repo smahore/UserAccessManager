@@ -44,7 +44,7 @@ public class UserRepository : IUserRepository
 
         return new PagedResult<UserDto>
         {
-            Items = items.ToList(),
+            Items = items.AsList(),
             TotalCount = total,
             Page = page,
             PageSize = pageSize

@@ -18,18 +18,17 @@ public class AuthRepository : IAuthRepository
     public async Task<IEnumerable<UserRoleDto>> GetUserRolesByUserNameAsync(UserRolesLookupRequest request)
     {
         using var connection = _context.CreateConnection();
-        const string sql = "EXEC GetUserRolesByUserName @UserName, @AllowedRoles";
-        var results = await connection.QueryAsync<dynamic>(sql, new
-        {
-            request.UserName,
-            request.AllowedRoles
-        });
+        var results = await connection.QueryAsync<SpUserRole>(
+            "EXEC GetUserRolesByUserName @UserName, @AllowedRoles",
+            new { request.UserName, request.AllowedRoles });
 
         return results.Select(r => new UserRoleDto
         {
-            UserId = (int)r.UserId,
-            AppName = (string)r.RoleName,
+            UserId = r.UserId,
+            AppName = r.RoleName,
             AppId = 0
         });
     }
+
+    private sealed record SpUserRole(int UserId, string RoleName);
 }

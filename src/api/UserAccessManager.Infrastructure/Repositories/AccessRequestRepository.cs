@@ -37,7 +37,7 @@ public class AccessRequestRepository : IAccessRequestRepository
 
         return new PagedResult<AccessRequestDto>
         {
-            Items = items.ToList(),
+            Items = items.AsList(),
             TotalCount = total,
             Page = page,
             PageSize = pageSize

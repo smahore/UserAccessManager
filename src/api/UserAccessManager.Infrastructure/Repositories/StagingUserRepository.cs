@@ -31,7 +31,7 @@ public class StagingUserRepository : IStagingUserRepository
 
         return new PagedResult<StagingUserDto>
         {
-            Items = items.ToList(),
+            Items = items.AsList(),
             TotalCount = total,
             Page = page,
             PageSize = pageSize
