@@ -1,6 +1,62 @@
 @UserAccessManager.API_HostAddress = http://localhost:5034
 
-GET {{UserAccessManager.API_HostAddress}}/weatherforecast/
+### ── Applications ──────────────────────────────────────
+
+### List all applications (to find AppId values)
+GET {{UserAccessManager.API_HostAddress}}/api/applications
 Accept: application/json
+
+### ── Users ─────────────────────────────────────────────
+
+### List users (paginated, optional search)
+GET {{UserAccessManager.API_HostAddress}}/api/users?page=1&pageSize=10
+Accept: application/json
+
+### ── Access Requests ───────────────────────────────────
+
+### 1. Submit a new access request
+POST {{UserAccessManager.API_HostAddress}}/api/access-requests
+Content-Type: application/json
+
+{
+  "userName": "mahores",
+  "email": "shubham.mahore@dnow.com",
+  "appRoleId": 3
+}
+
+### 2. List access requests (filter by status)
+GET {{UserAccessManager.API_HostAddress}}/api/access-requests?status=Pending
+Accept: application/json
+
+### 3. Get a specific access request by ID
+GET {{UserAccessManager.API_HostAddress}}/api/access-requests/47
+Accept: application/json
+
+### 4. Approve an access request
+PATCH {{UserAccessManager.API_HostAddress}}/api/access-requests/1/status
+Content-Type: application/json
+
+{
+  "status": "Approved"
+}
+
+### 5. Fulfill an access request (grants the role in UserRoles)
+PATCH {{UserAccessManager.API_HostAddress}}/api/access-requests/1/status
+Content-Type: application/json
+
+{
+  "status": "Fulfilled"
+}
+
+### ── Auth ──────────────────────────────────────────────
+
+### Look up user roles by username
+POST {{UserAccessManager.API_HostAddress}}/api/auth/user-roles
+Content-Type: application/json
+
+{
+  "userName": "mahores",
+  "allowedRoles": "MATSEARCH,LDE"
+}
 
 ###

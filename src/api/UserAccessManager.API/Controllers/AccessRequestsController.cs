@@ -53,9 +53,9 @@ public class AccessRequestsController : ControllerBase
         if (!validation.IsValid)
             return BadRequest(ApiResponse<object>.FailResponse("Validation failed.", validation.Errors.Select(e => e.ErrorMessage).ToList()));
 
-        var updated = await _repo.UpdateStatusAsync(id, request.Status);
-        if (!updated)
-            return NotFound(ApiResponse<object>.FailResponse($"Access request with ID {id} not found."));
-        return Ok(ApiResponse<object>.SuccessResponse(new { }, $"Access request status updated to '{request.Status}'."));
+        var result = await _repo.UpdateStatusAsync(id, request.Status);
+        if (!result.Success)
+            return NotFound(ApiResponse<object>.FailResponse(result.Message));
+        return Ok(ApiResponse<object>.SuccessResponse(new { }, result.Message));
     }
 }

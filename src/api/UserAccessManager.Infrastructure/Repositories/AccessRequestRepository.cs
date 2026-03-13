@@ -67,14 +67,71 @@ public class AccessRequestRepository : IAccessRequestRepository
         return result ?? new AccessRequestResultDto { Status = "Error", Message = "No result returned from stored procedure." };
     }
 
-    public async Task<bool> UpdateStatusAsync(int id, string status)
+    public async Task<StatusUpdateResult> UpdateStatusAsync(int id, string status)
     {
         using var connection = _context.CreateConnection();
-        const string sql = @"
+        connection.Open();
+        using var transaction = connection.BeginTransaction();
+
+        // Look up the access request
+        const string selectSql = @"
+            SELECT AccessRequestId, UserName, RoleName, Status, CreatedDate, AppRoleId, Email
+            FROM ApplicationAccessRequests
+            WHERE AccessRequestId = @AccessRequestId";
+        var accessRequest = await connection.QuerySingleOrDefaultAsync<AccessRequestDto>(
+            selectSql, new { AccessRequestId = id }, transaction);
+
+        if (accessRequest is null)
+            return StatusUpdateResult.NotFound(id);
+
+        if (string.Equals(status, "Fulfilled", StringComparison.OrdinalIgnoreCase))
+        {
+            // Find the user by email
+            const string userSql = @"
+                SELECT UserId, IsActive
+                FROM Users
+                WHERE Email = @Email";
+            var user = await connection.QuerySingleOrDefaultAsync<dynamic>(
+                userSql, new { accessRequest.Email }, transaction);
+
+            if (user is null)
+                return StatusUpdateResult.UserNotFound(accessRequest.Email ?? accessRequest.UserName);
+
+            if (!(bool)user.IsActive)
+                return StatusUpdateResult.UserInactive(accessRequest.Email ?? accessRequest.UserName);
+
+            int userId = (int)user.UserId;
+
+            // Check if the role is already assigned
+            const string existsSql = @"
+                SELECT COUNT(1) FROM UserRoles
+                WHERE UserId = @UserId AND AppId = @AppId";
+            var alreadyAssigned = await connection.ExecuteScalarAsync<int>(
+                existsSql, new { UserId = userId, AppId = accessRequest.AppRoleId }, transaction);
+
+            if (alreadyAssigned > 0)
+                return StatusUpdateResult.RoleAlreadyAssigned(accessRequest.RoleName);
+
+            // Grant the role
+            const string insertRoleSql = @"
+                INSERT INTO UserRoles (UserId, AppId, CreatedAt)
+                VALUES (@UserId, @AppId, GETDATE())";
+            await connection.ExecuteAsync(
+                insertRoleSql, new { UserId = userId, AppId = accessRequest.AppRoleId }, transaction);
+        }
+
+        // Update the status
+        const string updateSql = @"
             UPDATE ApplicationAccessRequests
             SET Status = @Status
             WHERE AccessRequestId = @AccessRequestId";
-        var rows = await connection.ExecuteAsync(sql, new { Status = status, AccessRequestId = id });
-        return rows > 0;
+        await connection.ExecuteAsync(
+            updateSql, new { Status = status, AccessRequestId = id }, transaction);
+
+        transaction.Commit();
+
+        return string.Equals(status, "Fulfilled", StringComparison.OrdinalIgnoreCase)
+            ? StatusUpdateResult.Fulfilled(accessRequest.RoleName)
+            : StatusUpdateResult.Updated(status);
     }
 }
