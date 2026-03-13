@@ -1,0 +1,128 @@
+@model PagedResult<UserDto>
+@{
+    ViewData["Title"] = "Users";
+    var search = ViewBag.Search as string;
+    var avatarColors = new[] { "#4361ee", "#059669", "#d97706", "#dc2626", "#7c3aed", "#0891b2" };
+}
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h2 class="mb-0"><i class="bi bi-people me-2"></i>Users</h2>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>Add User
+    </a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="d-flex gap-2 align-items-center">
+            <div class="flex-grow-1 position-relative">
+                <i class="bi bi-search position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
+                <input type="text" name="search" value="@search" class="form-control form-control-sm ps-5"
+                       placeholder="Search by username, name, or email..." />
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-search me-1"></i>Search
+            </button>
+            @if (!string.IsNullOrEmpty(search))
+            {
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Clear</a>
+            }
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Source</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model.Items)
+                    {
+                        var initials = string.IsNullOrEmpty(user.FullName)
+                            ? user.UserName[..1].ToUpper()
+                            : string.Concat(user.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w[0])).ToUpper();
+                        var color = avatarColors[Math.Abs(user.UserName.GetHashCode()) % avatarColors.Length];
+                        <tr>
+                            <td class="text-muted">@user.UserId</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="avatar-sm" style="background:@color">@initials</span>
+                                    <div>
+                                        <strong>@user.UserName</strong>
+                                        <div class="text-muted small">@(user.FullName ?? "—")</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="small">@(user.Email ?? "—")</td>
+                            <td><span class="badge badge-source">@user.Source</span></td>
+                            <td>
+                                @if (user.IsActive)
+                                {
+                                    <span class="badge badge-active">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-inactive">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-muted small">@user.CreatedAt.ToString("MMM dd, yyyy")</td>
+                            <td class="text-end">
+                                <a asp-action="Details" asp-route-id="@user.UserId" class="btn btn-sm btn-outline-primary" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a asp-action="Edit" asp-route-id="@user.UserId" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Items.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-4">
+                            <i class="bi bi-people empty-state-icon d-block mb-2"></i>No users found
+                        </td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <nav class="mt-3">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(Model.HasPrevious ? "" : "disabled")">
+                <a class="page-link" asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-search="@search">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.Page ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-search="@search">@i</a>
+                </li>
+            }
+            <li class="page-item @(Model.HasNext ? "" : "disabled")">
+                <a class="page-link" asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-search="@search">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+}
+
+<p class="text-muted text-center small mt-2">
+    Showing page @Model.Page of @Model.TotalPages (@Model.TotalCount total users)
+</p>

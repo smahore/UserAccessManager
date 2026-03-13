@@ -1,0 +1,160 @@
+@model UserDto
+@{
+    ViewData["Title"] = $"User: {Model.UserName}";
+    var roles = ViewBag.Roles as List<UserRoleDto> ?? new List<UserRoleDto>();
+    var apps = ViewBag.Applications as List<ApplicationDto> ?? new List<ApplicationDto>();
+    var avatarColors = new[] { "#4361ee", "#059669", "#d97706", "#dc2626", "#7c3aed", "#0891b2" };
+    var initials = string.IsNullOrEmpty(Model.FullName)
+        ? Model.UserName[..1].ToUpper()
+        : string.Concat(Model.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => w[0])).ToUpper();
+    var color = avatarColors[Math.Abs(Model.UserName.GetHashCode()) % avatarColors.Length];
+}
+
+<div class="page-header d-flex align-items-center">
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm me-3">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <span class="avatar-lg me-3" style="background:@color">@initials</span>
+    <div>
+        <h2 class="mb-0">@Model.UserName</h2>
+        <small class="text-muted">@(Model.FullName ?? "—") &middot; @(Model.Email ?? "—")</small>
+    </div>
+    <div class="ms-auto d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.UserId" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-pencil me-1"></i>Edit
+        </a>
+        <form asp-action="ToggleStatus" method="post" class="d-inline">
+            <input type="hidden" name="id" value="@Model.UserId" />
+            <input type="hidden" name="isActive" value="@Model.IsActive.ToString().ToLower()" />
+            @if (Model.IsActive)
+            {
+                <button type="submit" class="btn btn-outline-danger btn-sm"
+                        onclick="return confirm('Deactivate this user?')">
+                    <i class="bi bi-x-circle me-1"></i>Deactivate
+                </button>
+            }
+            else
+            {
+                <button type="submit" class="btn btn-outline-success btn-sm">
+                    <i class="bi bi-check-circle me-1"></i>Activate
+                </button>
+            }
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header"><h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>User Information</h5></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="detail-label">User ID</div>
+                        <div class="detail-value">@Model.UserId</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="detail-label">Username</div>
+                        <div class="detail-value fw-semibold">@Model.UserName</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="detail-label">Full Name</div>
+                        <div class="detail-value">@(Model.FullName ?? "—")</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="detail-label">Email</div>
+                        <div class="detail-value">@(Model.Email ?? "—")</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="detail-label">Source</div>
+                        <div class="detail-value"><span class="badge badge-source">@Model.Source</span></div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="detail-label">Status</div>
+                        <div class="detail-value">
+                            @if (Model.IsActive)
+                            {
+                                <span class="badge badge-active">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-inactive">Inactive</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="detail-label">Created</div>
+                        <div class="detail-value small">@Model.CreatedAt.ToString("MMM dd, yyyy HH:mm")<br /><span class="text-muted">by @Model.CreatedBy</span></div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="detail-label">Updated</div>
+                        <div class="detail-value small">@Model.UpdatedAt.ToString("MMM dd, yyyy HH:mm")<br /><span class="text-muted">by @Model.UpdatedBy</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-shield-check me-2"></i>Assigned Roles</h5>
+                <span class="badge bg-primary rounded-pill">@roles.Count</span>
+            </div>
+            <div class="card-body">
+                @if (roles.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var role in roles)
+                        {
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="app-icon"><i class="bi bi-app"></i></span>
+                                    <div>
+                                        <strong>@role.AppName</strong>
+                                        <div class="text-muted small">Assigned: @role.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                    </div>
+                                </div>
+                                <form asp-action="RemoveRole" method="post">
+                                    <input type="hidden" name="id" value="@Model.UserId" />
+                                    <input type="hidden" name="appId" value="@role.AppId" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Remove this role?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-shield empty-state-icon d-block mb-1"></i>
+                        <span class="small">No roles assigned</span>
+                    </div>
+                }
+
+                <hr />
+                <h6 class="mb-2"><i class="bi bi-plus-circle me-1"></i>Assign New Role</h6>
+                <form asp-action="AssignRole" method="post" class="d-flex gap-2">
+                    <input type="hidden" name="id" value="@Model.UserId" />
+                    <select name="appId" class="form-select form-select-sm flex-grow-1" required>
+                        <option value="">Select application...</option>
+                        @foreach (var app in apps)
+                        {
+                            var alreadyAssigned = roles.Any(r => r.AppId == app.AppId);
+                            if (!alreadyAssigned)
+                            {
+                                <option value="@app.AppId">@app.AppName</option>
+                            }
+                        }
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

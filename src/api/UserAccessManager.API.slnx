@@ -3,4 +3,5 @@
   <Project Path="UserAccessManager.API/UserAccessManager.API.csproj" />
   <Project Path="UserAccessManager.Core/UserAccessManager.Core.csproj" />
   <Project Path="UserAccessManager.Infrastructure/UserAccessManager.Infrastructure.csproj" />
+  <Project Path="UserAccessManager.Web/UserAccessManager.Web.csproj" />
 </Solution>

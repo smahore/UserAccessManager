@@ -1,0 +1,38 @@
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    int page = 1;
+    int totalPages = 1;
+    bool hasPrev = false;
+    bool hasNext = false;
+    string baseUrl = "";
+}
+
+@if (ViewData["PagerModel"] is not null)
+{
+    page = (int)(ViewData["Page"] ?? 1);
+    totalPages = (int)(ViewData["TotalPages"] ?? 1);
+    hasPrev = (bool)(ViewData["HasPrevious"] ?? false);
+    hasNext = (bool)(ViewData["HasNext"] ?? false);
+    baseUrl = (string)(ViewData["PagerBaseUrl"] ?? "");
+
+    if (totalPages > 1)
+    {
+        <nav>
+            <ul class="pagination justify-content-center mt-3">
+                <li class="page-item @(hasPrev ? "" : "disabled")">
+                    <a class="page-link" href="@baseUrl&page=@(page - 1)">Previous</a>
+                </li>
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == page ? "active" : "")">
+                        <a class="page-link" href="@baseUrl&page=@i">@i</a>
+                    </li>
+                }
+                <li class="page-item @(hasNext ? "" : "disabled")">
+                    <a class="page-link" href="@baseUrl&page=@(page + 1)">Next</a>
+                </li>
+            </ul>
+        </nav>
+    }
+}
